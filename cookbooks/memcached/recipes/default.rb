@@ -8,8 +8,8 @@ node[:applications].each do |app_name,data|
   user = node[:users].first
 
 case node[:instance_role]
- when "solo", "app", "app_master"
-   template "/data/#{app_name}/shared/config/memcached_custom.yml" do
+   when  "app", "app_master"
+ template "/data/#{app_name}/shared/config/memcached_custom.yml" do
      source "memcached.yml.erb"
      owner user[:username]
      group user[:username]
@@ -19,14 +19,31 @@ case node[:instance_role]
          :server_names => node[:members]
      })
    end
+  end
 
+  
+if node[:name] == 'memcached'   
+   
    template "/etc/conf.d/memcached" do
      owner 'root'
      group 'root'
      mode 0644
      source "memcached.erb"
-     variables :memusage => 64,
+     variables :memusage => 564,
                :port     => 11211
    end
- end
+
+## Start memcached service on system boot ##   
+   execute "enable memcached" do
+  command "rc-update add memcached default"
+  action :run
+end
+
+execute "start memcached" do
+  command "/etc/init.d/memcached restart"
+  action :run
+  not_if "/etc/init.d/memcached status"
+end
+  
+	end  
 end
