@@ -4,11 +4,17 @@ require 'pp'
 # Recipe:: default
 #
 
+server_name = ""
+node[:utility_instances].each do |instance|
+ server_name = instance[:hostname] if instance[:name] == 'memcached'
+end
+
 node[:applications].each do |app_name,data|
   user = node[:users].first
-
-case node[:instance_role]
-   when  "app", "app_master"
+  
+case @node[:instance_role]     when  "app_master",  "app"
+ ##  when  'app', 'app_master', 'solo'
+ ## when  "app_master", "app"
  template "/data/#{app_name}/shared/config/memcached_custom.yml" do
      source "memcached.yml.erb"
      owner user[:username]
@@ -16,7 +22,7 @@ case node[:instance_role]
      mode 0744
      variables({
          :app_name => app_name,
-         :server_names => node[:members]
+         :server_name => server_name
      })
    end
   end
